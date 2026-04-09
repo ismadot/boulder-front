@@ -1,9 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { User } from 'firebase/auth';
 import type { VideoFile, JobState } from '../lib/api';
 
 // ─── App store ──────────────────────────────────────────────────────
 interface AppState {
+  // Auth — NOT persisted (Firebase restores it via onAuthStateChanged)
+  user: User | null;
+  authReady: boolean;           // true once onAuthStateChanged fires at least once
+  setUser: (u: User | null) => void;
+  setAuthReady: (r: boolean) => void;
+
   // Videos
   videos: VideoFile[];
   setVideos: (v: VideoFile[]) => void;
@@ -30,6 +37,11 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
+      user: null,
+      authReady: false,
+      setUser: (user) => set({ user }),
+      setAuthReady: (authReady) => set({ authReady }),
+
       videos: [],
       setVideos: (videos) => set({ videos }),
       addVideo: (v) => set((s) => ({ videos: [...s.videos, v] })),
