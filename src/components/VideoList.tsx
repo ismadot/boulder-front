@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { listVideos, createJob, type ProcessOptions } from '../lib/api';
 import { useAppStore } from '../stores/app';
+import { ClimberProfileForm } from './ClimberProfileForm';
 
 // ─── Option definitions (matches ProcessRequest in server.py) ───────
 const OPTION_GROUPS = [
@@ -138,6 +139,7 @@ export function VideoList() {
   const setVideos = useAppStore((s) => s.setVideos);
   const setActiveJob = useAppStore((s) => s.setActiveJob);
   const setView = useAppStore((s) => s.setView);
+  const climberProfile = useAppStore((s) => s.climberProfile);
 
   const [loading, setLoading] = useState<string | null>(null);   // filename being processed
   const [expanded, setExpanded] = useState<string | null>(null); // filename with open options
@@ -156,6 +158,10 @@ export function VideoList() {
     const opts = getOpts(filename);
     try {
       const payload: ProcessOptions = { video_path: videoPath, ...opts };
+      if (climberProfile?.height_m && climberProfile?.weight_kg) {
+        payload.climber_height_m = climberProfile.height_m;
+        payload.climber_weight_kg = climberProfile.weight_kg;
+      }
       const { job_id } = await createJob(payload);
       setActiveJob({
         id: job_id,
@@ -191,6 +197,12 @@ export function VideoList() {
   return (
     <div className="space-y-3">
       <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">Videos subidos</h3>
+
+      {/* Climber profile inputs */}
+      <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
+        <ClimberProfileForm />
+      </div>
+
       <ul className="space-y-2">
         {videos.map((v) => {
           const isExpanded = expanded === v.filename;

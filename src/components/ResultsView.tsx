@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { videoUrl, videoDownloadUrl, reportUrl, getJobSummary, type JobState } from '../lib/api';
 import { useAppStore } from '../stores/app';
+import { ClimbingStatusChart } from './ClimbingStatusChart';
 
 // ─── Movement badge colors ───────────────────────────────────────────
 const MOVEMENT_COLOR: Record<string, string> = {
@@ -109,6 +110,9 @@ function SummaryPanel({ jobId }: { jobId: string }) {
           eficiencia del movimiento: trayectorias más cortas indican menor gasto energético.
         </p>
       </div>
+
+      {/* Climbing status radar chart */}
+      <ClimbingStatusChart summary={data} />
     </div>
   );
 }

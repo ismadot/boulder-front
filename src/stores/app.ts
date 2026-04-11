@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User } from 'firebase/auth';
 import type { VideoFile, JobState } from '../lib/api';
+import type { ClimberProfile } from '../lib/profile';
 
 // ─── App store ──────────────────────────────────────────────────────
 interface AppState {
@@ -28,6 +29,10 @@ interface AppState {
   // Job history
   jobHistory: JobState[];
   addJobToHistory: (j: JobState) => void;
+
+  // Climber profile (Firestore)
+  climberProfile: ClimberProfile | null;
+  setClimberProfile: (p: ClimberProfile | null) => void;
 
   // UI
   view: 'upload' | 'processing' | 'results';
@@ -71,6 +76,9 @@ export const useAppStore = create<AppState>()(
 
       jobHistory: [],
       addJobToHistory: (j) => set((s) => ({ jobHistory: [j, ...s.jobHistory] })),
+
+      climberProfile: null,
+      setClimberProfile: (climberProfile) => set({ climberProfile }),
 
       view: 'upload',
       setView: (view) => set({ view }),

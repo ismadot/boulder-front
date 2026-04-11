@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './lib/firebase';
+import { loadProfile } from './lib/profile';
 import { Layout } from './components/Layout';
 import { Login } from './components/Login';
 import { VideoUpload } from './components/VideoUpload';
@@ -17,11 +18,18 @@ function App() {
   const authReady = useAppStore((s) => s.authReady);
   const setUser = useAppStore((s) => s.setUser);
   const setAuthReady = useAppStore((s) => s.setAuthReady);
+  const setClimberProfile = useAppStore((s) => s.setClimberProfile);
 
   // Subscribe to Firebase auth state once on mount
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+      if (firebaseUser) {
+        const profile = await loadProfile(firebaseUser.uid);
+        setClimberProfile(profile);
+      } else {
+        setClimberProfile(null);
+      }
       setAuthReady(true);
     });
     return unsubscribe;

@@ -94,6 +94,9 @@ export interface ProcessOptions {
   show_feet?: boolean;
   // Report
   generate_report?: boolean;
+  // Climber profile
+  climber_height_m?: number;
+  climber_weight_kg?: number;
 }
 
 export async function createJob(opts: ProcessOptions): Promise<{ job_id: string }> {
@@ -152,6 +155,11 @@ export interface JobSummary {
   movement_counts: Record<string, number>;
   com_total_travel_px: number;
   com_sample_count: number;
+  // Biomechanics (present when climber profile was provided)
+  vertical_gain_m: number | null;
+  energy_kj: number | null;
+  avg_climbing_power_w: number | null;
+  max_climbing_power_w: number | null;
 }
 
 export async function getJobSummary(jobId: string): Promise<JobSummary> {
