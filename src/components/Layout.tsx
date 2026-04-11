@@ -3,7 +3,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { useAppStore } from '../stores/app';
 
-const tabs = [
+const baseTabs = [
   { key: 'upload' as const, label: 'Upload' },
   { key: 'processing' as const, label: 'Processing' },
   { key: 'results' as const, label: 'Results' },
@@ -13,6 +13,11 @@ export function Layout({ children }: { children: ReactNode }) {
   const view = useAppStore((s) => s.view);
   const setView = useAppStore((s) => s.setView);
   const user = useAppStore((s) => s.user);
+  const userRole = useAppStore((s) => s.userRole);
+
+  const tabs = userRole === 'admin'
+    ? [...baseTabs, { key: 'admin' as const, label: 'Admin' }]
+    : baseTabs;
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">

@@ -10,6 +10,19 @@
 const _origin = import.meta.env.VITE_API_URL ?? '';
 const BASE = `${_origin}/api`;
 
+import { auth } from './firebase';
+
+/** Fetch wrapper that injects Firebase ID token as Bearer auth header. */
+export async function authFetch(path: string, init?: RequestInit): Promise<Response> {
+  const user = auth.currentUser;
+  const headers = new Headers(init?.headers);
+  if (user) {
+    const token = await user.getIdToken();
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  return fetch(`${_origin}${path}`, { ...init, headers });
+}
+
 // ─── Types ──────────────────────────────────────────────────────────
 export interface VideoFile {
   filename: string;
@@ -48,13 +61,13 @@ export async function healthCheck() {
 
 // ─── Config ─────────────────────────────────────────────────────────
 export async function getConfig(): Promise<Record<string, unknown>> {
-  const res = await fetch(`${BASE}/config`);
+  const res = await authFetch('/api/config');
   if (!res.ok) throw new Error('Failed to load config');
   return res.json();
 }
 
 export async function updateConfig(config: Record<string, unknown>) {
-  const res = await fetch(`${BASE}/config`, {
+  const res = await authFetch('/api/config', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(config),
@@ -65,14 +78,14 @@ export async function updateConfig(config: Record<string, unknown>) {
 
 // ─── Videos ─────────────────────────────────────────────────────────
 export async function listVideos(): Promise<VideoFile[]> {
-  const res = await fetch(`${BASE}/videos`);
+  const res = await authFetch('/api/videos');
   return res.json();
 }
 
 export async function uploadVideo(file: File): Promise<VideoFile> {
   const form = new FormData();
   form.append('file', file);
-  const res = await fetch(`${BASE}/videos/upload`, {
+  const res = await authFetch('/api/videos/upload', {
     method: 'POST',
     body: form,
   });
@@ -100,7 +113,7 @@ export interface ProcessOptions {
 }
 
 export async function createJob(opts: ProcessOptions): Promise<{ job_id: string }> {
-  const res = await fetch(`${BASE}/jobs`, {
+  const res = await authFetch('/api/jobs', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(opts),
@@ -113,7 +126,7 @@ export async function createJob(opts: ProcessOptions): Promise<{ job_id: string 
 }
 
 export async function getJob(jobId: string): Promise<JobState> {
-  const res = await fetch(`${BASE}/jobs/${jobId}`);
+  const res = await authFetch(`/api/jobs/${jobId}`);
   if (!res.ok) throw new Error('Job not found');
   return res.json();
 }
@@ -163,7 +176,7 @@ export interface JobSummary {
 }
 
 export async function getJobSummary(jobId: string): Promise<JobSummary> {
-  const res = await fetch(`${BASE}/jobs/${jobId}/summary`);
+  const res = await authFetch(`/api/jobs/${jobId}/summary`);
   if (!res.ok) throw new Error('Summary not available');
   return res.json();
 }

@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { User } from 'firebase/auth';
 import type { VideoFile, JobState } from '../lib/api';
 import type { ClimberProfile } from '../lib/profile';
+import type { UserRole } from '../lib/access';
 
 // ─── App store ──────────────────────────────────────────────────────
 interface AppState {
@@ -34,9 +35,13 @@ interface AppState {
   climberProfile: ClimberProfile | null;
   setClimberProfile: (p: ClimberProfile | null) => void;
 
+  // Role (from backend allowed_emails whitelist)
+  userRole: UserRole | null;
+  setUserRole: (r: UserRole | null) => void;
+
   // UI
-  view: 'upload' | 'processing' | 'results';
-  setView: (v: 'upload' | 'processing' | 'results') => void;
+  view: 'upload' | 'processing' | 'results' | 'admin';
+  setView: (v: 'upload' | 'processing' | 'results' | 'admin') => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -79,6 +84,9 @@ export const useAppStore = create<AppState>()(
 
       climberProfile: null,
       setClimberProfile: (climberProfile) => set({ climberProfile }),
+
+      userRole: null,
+      setUserRole: (userRole) => set({ userRole }),
 
       view: 'upload',
       setView: (view) => set({ view }),
