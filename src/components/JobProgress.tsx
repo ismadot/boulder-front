@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { streamJob, getJob, videoUrl, reportUrl } from '../lib/api';
+import { streamJob, getJob, cancelJob, videoUrl, reportUrl } from '../lib/api';
 import { useAppStore } from '../stores/app';
 
 // ─── Spinner ────────────────────────────────────────────────────────
@@ -33,6 +33,7 @@ export function JobProgress() {
   const setView = useAppStore((s) => s.setView);
 
   const [elapsed, setElapsed] = useState(0);
+  const [cancelling, setCancelling] = useState(false);
 
   // Elapsed timer — runs while processing
   useEffect(() => {
@@ -59,11 +60,13 @@ export function JobProgress() {
     streamJob(activeJob.id, (status, progress, currentFrame, totalFrames) => {
       updateJobProgress(status, progress, currentFrame, totalFrames);
 
-      if (status === 'done' || status === 'error') {
+      if (status === 'done' || status === 'error' || status === 'cancelled') {
         getJob(activeJob.id).then((j) => {
           setActiveJob(j);
-          addJobToHistory(j);
-          if (status === 'done') setView('results');
+          if (status === 'done') {
+            addJobToHistory(j);
+            setView('results');
+          }
         });
       }
     }).then((source) => {
@@ -90,16 +93,17 @@ export function JobProgress() {
   const isRunning = activeJob.status === 'queued' || activeJob.status === 'processing';
   const isDone = activeJob.status === 'done';
   const isError = activeJob.status === 'error';
+  const isCancelled = activeJob.status === 'cancelled';
 
   const statusColor = isDone
     ? 'text-emerald-400'
-    : isError
+    : isError || isCancelled
     ? 'text-red-400'
     : 'text-amber-400';
 
   const barColor = isDone
     ? 'bg-emerald-500'
-    : isError
+    : isError || isCancelled
     ? 'bg-red-500'
     : 'bg-emerald-500';
 
@@ -129,6 +133,22 @@ export function JobProgress() {
           <span className={`text-sm font-semibold capitalize ${statusColor}`}>
             {activeJob.status}
           </span>
+          {isRunning && (
+            <button
+              onClick={async () => {
+                setCancelling(true);
+                try {
+                  await cancelJob(activeJob.id);
+                } catch {
+                  setCancelling(false);
+                }
+              }}
+              disabled={cancelling}
+              className="px-3 py-1 bg-red-600 hover:bg-red-500 disabled:opacity-50 rounded-md text-xs font-medium transition-colors"
+            >
+              {cancelling ? 'Cancelando…' : 'Cancelar'}
+            </button>
+          )}
         </div>
 
         {/* Progress bar */}
@@ -182,10 +202,20 @@ export function JobProgress() {
         )}
 
         {/* Error */}
-        {isError && (
-          <p className="text-red-400 text-sm bg-red-400/10 rounded-lg px-3 py-2">
-            {activeJob.error}
+        {(isError || isCancelled) && (
+          <p className={`text-sm rounded-lg px-3 py-2 ${isCancelled ? 'text-amber-400 bg-amber-400/10' : 'text-red-400 bg-red-400/10'}`}>
+            {isCancelled ? 'El procesamiento fue cancelado.' : activeJob.error}
           </p>
+        )}
+
+        {/* Back to upload when cancelled */}
+        {isCancelled && (
+          <button
+            onClick={() => { setActiveJob(null); setView('upload'); }}
+            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-sm font-medium transition-colors"
+          >
+            ← Volver a subir video
+          </button>
         )}
 
         {/* Download links when done */}

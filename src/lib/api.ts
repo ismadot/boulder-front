@@ -32,7 +32,7 @@ export interface VideoFile {
 
 export interface JobState {
   id: string;
-  status: 'queued' | 'processing' | 'done' | 'error';
+  status: 'queued' | 'processing' | 'done' | 'error' | 'cancelled';
   // Raw progress
   progress: number;
   current_frame: number;
@@ -131,6 +131,14 @@ export async function getJob(jobId: string): Promise<JobState> {
   return res.json();
 }
 
+export async function cancelJob(jobId: string): Promise<void> {
+  const res = await authFetch(`/api/jobs/${jobId}/cancel`, { method: 'POST' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to cancel job');
+  }
+}
+
 export async function streamJob(
   jobId: string,
   onProgress: (status: string, progress: number, currentFrame: number, totalFrames: number) => void,
@@ -142,7 +150,7 @@ export async function streamJob(
   es.onmessage = (event) => {
     const data = JSON.parse(event.data);
     onProgress(data.status, data.progress, data.current_frame ?? 0, data.total_frames ?? 0);
-    if (data.status === 'done' || data.status === 'error') {
+    if (data.status === 'done' || data.status === 'error' || data.status === 'cancelled') {
       es.close();
     }
   };

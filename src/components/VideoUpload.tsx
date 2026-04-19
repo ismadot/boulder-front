@@ -2,6 +2,25 @@ import { useCallback, useState } from 'react';
 import { uploadVideo } from '../lib/api';
 import { useAppStore } from '../stores/app';
 
+const ALLOWED_EXTENSIONS = ['.mp4', '.mov', '.avi', '.mkv', '.webm'];
+const MAX_DURATION_S = 10 * 60; // 10 minutes
+
+function getVideoDuration(file: File): Promise<number> {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => {
+      resolve(video.duration);
+      URL.revokeObjectURL(video.src);
+    };
+    video.onerror = () => {
+      resolve(0); // can't read — let backend validate
+      URL.revokeObjectURL(video.src);
+    };
+    video.src = URL.createObjectURL(file);
+  });
+}
+
 export function VideoUpload() {
   const addVideo = useAppStore((s) => s.addVideo);
   const setView = useAppStore((s) => s.setView);
@@ -12,8 +31,27 @@ export function VideoUpload() {
   const handleFiles = useCallback(
     async (files: FileList | null) => {
       if (!files?.length) return;
-      setUploading(true);
       setError(null);
+
+      for (const file of Array.from(files)) {
+        // Validate extension
+        const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+        if (!ALLOWED_EXTENSIONS.includes(ext)) {
+          setError(`Formato no soportado (${ext}). Permitidos: ${ALLOWED_EXTENSIONS.join(', ')}`);
+          return;
+        }
+
+        // Validate duration client-side
+        const duration = await getVideoDuration(file);
+        if (duration > MAX_DURATION_S) {
+          const mins = Math.floor(duration / 60);
+          const secs = Math.floor(duration % 60);
+          setError(`El video dura ${mins}m${secs}s. El máximo permitido es ${MAX_DURATION_S / 60} minutos.`);
+          return;
+        }
+      }
+
+      setUploading(true);
       try {
         for (const file of Array.from(files)) {
           const video = await uploadVideo(file);
@@ -53,7 +91,7 @@ export function VideoUpload() {
       >
         <input
           type="file"
-          accept="video/*"
+          accept=".mp4,.mov,.avi,.mkv,.webm"
           multiple
           className="hidden"
           onChange={(e) => handleFiles(e.target.files)}
@@ -66,7 +104,7 @@ export function VideoUpload() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16V4m0 0l-4 4m4-4l4 4M4 20h16" />
             </svg>
             <p className="text-gray-400">Drag & drop video files or click to browse</p>
-            <p className="text-gray-600 text-sm mt-1">MP4, MOV, AVI supported</p>
+            <p className="text-gray-600 text-sm mt-1">MP4, MOV, AVI, MKV, WebM — máx. 10 minutos</p>
           </>
         )}
       </label>
