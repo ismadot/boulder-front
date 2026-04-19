@@ -131,11 +131,14 @@ export async function getJob(jobId: string): Promise<JobState> {
   return res.json();
 }
 
-export function streamJob(
+export async function streamJob(
   jobId: string,
   onProgress: (status: string, progress: number, currentFrame: number, totalFrames: number) => void,
-): EventSource {
-  const es = new EventSource(`${BASE}/jobs/${jobId}/stream`);
+): Promise<EventSource> {
+  // EventSource can't send Authorization headers — pass token as query param
+  const user = auth.currentUser;
+  const token = user ? await user.getIdToken() : '';
+  const es = new EventSource(`${BASE}/jobs/${jobId}/stream?token=${encodeURIComponent(token)}`);
   es.onmessage = (event) => {
     const data = JSON.parse(event.data);
     onProgress(data.status, data.progress, data.current_frame ?? 0, data.total_frames ?? 0);

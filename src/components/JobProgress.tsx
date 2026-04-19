@@ -53,7 +53,10 @@ export function JobProgress() {
   useEffect(() => {
     if (!activeJob || activeJob.status === 'done' || activeJob.status === 'error') return;
 
-    const es = streamJob(activeJob.id, (status, progress, currentFrame, totalFrames) => {
+    let es: EventSource | null = null;
+    let cancelled = false;
+
+    streamJob(activeJob.id, (status, progress, currentFrame, totalFrames) => {
       updateJobProgress(status, progress, currentFrame, totalFrames);
 
       if (status === 'done' || status === 'error') {
@@ -63,9 +66,15 @@ export function JobProgress() {
           if (status === 'done') setView('results');
         });
       }
+    }).then((source) => {
+      if (cancelled) { source.close(); return; }
+      es = source;
     });
 
-    return () => es.close();
+    return () => {
+      cancelled = true;
+      es?.close();
+    };
   }, [activeJob, addJobToHistory, setActiveJob, setView, updateJobProgress]);
 
   if (!activeJob) {
