@@ -52,7 +52,7 @@ export function JobProgress() {
 
   // SSE subscription
   useEffect(() => {
-    if (!activeJob || activeJob.status === 'done' || activeJob.status === 'error') return;
+    if (!activeJob || activeJob.status === 'done' || activeJob.status === 'error' || activeJob.status === 'cancelled') return;
 
     let es: EventSource | null = null;
     let cancelled = false;
@@ -121,7 +121,7 @@ export function JobProgress() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             )}
-            {isError && (
+            {(isError || isCancelled) && (
               <svg className="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -130,25 +130,27 @@ export function JobProgress() {
               {activeJob.video_path.split('/').pop()}
             </span>
           </div>
-          <span className={`text-sm font-semibold capitalize ${statusColor}`}>
-            {activeJob.status}
-          </span>
-          {isRunning && (
-            <button
-              onClick={async () => {
-                setCancelling(true);
-                try {
-                  await cancelJob(activeJob.id);
-                } catch {
-                  setCancelling(false);
-                }
-              }}
-              disabled={cancelling}
-              className="px-3 py-1 bg-red-600 hover:bg-red-500 disabled:opacity-50 rounded-md text-xs font-medium transition-colors"
-            >
-              {cancelling ? 'Cancelando…' : 'Cancelar'}
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            <span className={`text-sm font-semibold capitalize ${statusColor}`}>
+              {isCancelled ? 'cancelado' : activeJob.status}
+            </span>
+            {isRunning && (
+              <button
+                onClick={async () => {
+                  setCancelling(true);
+                  try {
+                    await cancelJob(activeJob.id);
+                  } catch {
+                    setCancelling(false);
+                  }
+                }}
+                disabled={cancelling}
+                className="px-3 py-1 bg-red-600 hover:bg-red-500 disabled:opacity-50 rounded-md text-xs font-medium transition-colors"
+              >
+                {cancelling ? 'Cancelando…' : 'Cancelar'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Progress bar */}
