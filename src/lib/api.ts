@@ -180,3 +180,39 @@ export async function getJobSummary(jobId: string): Promise<JobSummary> {
   if (!res.ok) throw new Error('Summary not available');
   return res.json();
 }
+
+// ─── Gallery ────────────────────────────────────────────────────────
+export interface GalleryEntry {
+  id: string;
+  uid: string;
+  email: string;
+  job_id: string;
+  original_filename: string;
+  gcs_video_object: string;
+  gcs_output_object: string;
+  gcs_report_csv_object: string;
+  gcs_report_txt_object: string;
+  stats: Record<string, unknown>;
+  created_at: string;
+  // Signed URLs (present when fetching single entry)
+  output_url?: string;
+  report_csv_url?: string;
+  report_txt_url?: string;
+}
+
+export async function listGallery(): Promise<GalleryEntry[]> {
+  const res = await authFetch('/api/gallery');
+  if (!res.ok) throw new Error('Failed to load gallery');
+  return res.json();
+}
+
+export async function getGalleryEntry(entryId: string): Promise<GalleryEntry> {
+  const res = await authFetch(`/api/gallery/${entryId}`);
+  if (!res.ok) throw new Error('Gallery entry not found');
+  return res.json();
+}
+
+export async function deleteGalleryEntry(entryId: string): Promise<void> {
+  const res = await authFetch(`/api/gallery/${entryId}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete entry');
+}

@@ -7,6 +7,7 @@ const baseTabs = [
   { key: 'upload' as const, label: 'Upload' },
   { key: 'processing' as const, label: 'Processing' },
   { key: 'results' as const, label: 'Results' },
+  { key: 'gallery' as const, label: 'Gallery' },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {

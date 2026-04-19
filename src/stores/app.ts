@@ -40,8 +40,8 @@ interface AppState {
   setUserRole: (r: UserRole | null) => void;
 
   // UI
-  view: 'upload' | 'processing' | 'results' | 'admin';
-  setView: (v: 'upload' | 'processing' | 'results' | 'admin') => void;
+  view: 'upload' | 'processing' | 'results' | 'gallery' | 'admin';
+  setView: (v: 'upload' | 'processing' | 'results' | 'gallery' | 'admin') => void;
 }
 
 export const useAppStore = create<AppState>()(

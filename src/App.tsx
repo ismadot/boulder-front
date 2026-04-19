@@ -9,6 +9,7 @@ import { VideoUpload } from './components/VideoUpload';
 import { VideoList } from './components/VideoList';
 import { JobProgress } from './components/JobProgress';
 import { ResultsView } from './components/ResultsView';
+import { Gallery } from './components/Gallery';
 import { AdminPanel } from './components/AdminPanel';
 import { useAppStore } from './stores/app';
 
@@ -103,6 +104,7 @@ function App() {
       )}
       {view === 'processing' && <JobProgress />}
       {view === 'results' && <ResultsView />}
+      {view === 'gallery' && <Gallery />}
       {view === 'admin' && <AdminPanel />}
     </Layout>
   );
