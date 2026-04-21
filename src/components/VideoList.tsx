@@ -243,10 +243,18 @@ export function VideoList() {
                   </button>
                   <button
                     onClick={() => process(v.path, v.filename)}
-                    disabled={!!loading}
+                    disabled={!!loading || !!deleting}
                     className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-sm rounded-md font-medium transition-colors"
                   >
                     {isProcessing ? 'Iniciando…' : 'Procesar'}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(v.filename)}
+                    disabled={!!loading || !!deleting}
+                    className="px-2.5 py-1.5 bg-red-900/40 hover:bg-red-800/60 disabled:opacity-50 text-xs rounded-md text-red-400 transition-colors"
+                    title="Eliminar video"
+                  >
+                    {deleting === v.filename ? '…' : '🗑'}
                   </button>
                 </div>
               </div>
