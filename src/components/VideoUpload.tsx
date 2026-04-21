@@ -23,7 +23,6 @@ function getVideoDuration(file: File): Promise<number> {
 
 export function VideoUpload() {
   const addVideo = useAppStore((s) => s.addVideo);
-  const setView = useAppStore((s) => s.setView);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,14 +56,13 @@ export function VideoUpload() {
           const video = await uploadVideo(file);
           addVideo(video);
         }
-        setView('processing');
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Upload failed');
       } finally {
         setUploading(false);
       }
     },
-    [addVideo, setView],
+    [addVideo],
   );
 
   return (
