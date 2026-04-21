@@ -154,24 +154,6 @@ export async function deleteJob(jobId: string): Promise<void> {
   }
 }
 
-export async function streamJob(
-  jobId: string,
-  onProgress: (status: string, progress: number, currentFrame: number, totalFrames: number) => void,
-): Promise<EventSource> {
-  // EventSource can't send Authorization headers — pass token as query param
-  const user = auth.currentUser;
-  const token = user ? await user.getIdToken() : '';
-  const es = new EventSource(`${BASE}/jobs/${jobId}/stream?token=${encodeURIComponent(token)}`);
-  es.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    onProgress(data.status, data.progress, data.current_frame ?? 0, data.total_frames ?? 0);
-    if (data.status === 'done' || data.status === 'error' || data.status === 'cancelled') {
-      es.close();
-    }
-  };
-  return es;
-}
-
 export function videoUrl(jobId: string) {
   return `${BASE}/jobs/${jobId}/video`;
 }

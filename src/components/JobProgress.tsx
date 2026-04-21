@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { streamJob, getJob, cancelJob, deleteJob, videoUrl, reportUrl } from '../lib/api';
+import { getJob, cancelJob, deleteJob, videoUrl, reportUrl } from '../lib/api';
 import { useAppStore } from '../stores/app';
 
 // ─── Spinner ────────────────────────────────────────────────────────
@@ -51,35 +51,32 @@ export function JobProgress() {
     return () => clearInterval(tick);
   }, [activeJob?.id, activeJob?.status]);
 
-  // SSE subscription
+  // Polling — replaces SSE. Interval adapts to job state to avoid wasted requests.
   useEffect(() => {
     if (!activeJob || activeJob.status === 'done' || activeJob.status === 'error' || activeJob.status === 'cancelled') return;
 
-    let es: EventSource | null = null;
-    let cancelled = false;
+    const interval = activeJob.status === 'queued' ? 8000
+      : activeJob.progress < 20 ? 5000
+      : 3000;
 
-    streamJob(activeJob.id, (status, progress, currentFrame, totalFrames) => {
-      updateJobProgress(status, progress, currentFrame, totalFrames);
-
-      if (status === 'done' || status === 'error' || status === 'cancelled') {
-        getJob(activeJob.id).then((j) => {
+    const timer = setInterval(async () => {
+      try {
+        const j = await getJob(activeJob.id);
+        updateJobProgress(j.status, j.progress, j.current_frame ?? 0, j.total_frames ?? 0);
+        if (j.status === 'done' || j.status === 'error' || j.status === 'cancelled') {
           setActiveJob(j);
-          if (status === 'done') {
+          if (j.status === 'done') {
             addJobToHistory(j);
             setView('results');
           }
-        });
+        }
+      } catch {
+        // network hiccup — next tick will retry
       }
-    }).then((source) => {
-      if (cancelled) { source.close(); return; }
-      es = source;
-    });
+    }, interval);
 
-    return () => {
-      cancelled = true;
-      es?.close();
-    };
-  }, [activeJob, addJobToHistory, setActiveJob, setView, updateJobProgress]);
+    return () => clearInterval(timer);
+  }, [activeJob?.id, activeJob?.status, activeJob?.progress, addJobToHistory, setActiveJob, setView, updateJobProgress]);
 
   if (!activeJob) {
     return (
