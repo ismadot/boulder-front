@@ -146,6 +146,14 @@ export async function cancelJob(jobId: string): Promise<void> {
   }
 }
 
+export async function deleteJob(jobId: string): Promise<void> {
+  const res = await authFetch(`/api/jobs/${jobId}`, { method: 'DELETE' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to delete job');
+  }
+}
+
 export async function streamJob(
   jobId: string,
   onProgress: (status: string, progress: number, currentFrame: number, totalFrames: number) => void,

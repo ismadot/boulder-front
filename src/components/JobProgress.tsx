@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { streamJob, getJob, cancelJob, videoUrl, reportUrl } from '../lib/api';
+import { streamJob, getJob, cancelJob, deleteJob, videoUrl, reportUrl } from '../lib/api';
 import { useAppStore } from '../stores/app';
 
 // ─── Spinner ────────────────────────────────────────────────────────
@@ -34,6 +34,7 @@ export function JobProgress() {
 
   const [elapsed, setElapsed] = useState(0);
   const [cancelling, setCancelling] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Elapsed timer — runs while processing
   useEffect(() => {
@@ -212,12 +213,50 @@ export function JobProgress() {
 
         {/* Back to upload when cancelled */}
         {isCancelled && (
-          <button
-            onClick={() => { setActiveJob(null); setView('upload'); }}
-            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-sm font-medium transition-colors"
-          >
-            ← Volver a subir video
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { setActiveJob(null); setView('upload'); }}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-sm font-medium transition-colors"
+            >
+              ← Volver a subir video
+            </button>
+            <button
+              onClick={async () => {
+                setDeleting(true);
+                try { await deleteJob(activeJob.id); } catch { /* best-effort */ }
+                setActiveJob(null);
+                setView('upload');
+              }}
+              disabled={deleting}
+              className="px-4 py-2 bg-red-900/60 hover:bg-red-800 disabled:opacity-50 rounded-md text-sm font-medium text-red-300 transition-colors"
+            >
+              {deleting ? 'Eliminando…' : 'Eliminar job'}
+            </button>
+          </div>
+        )}
+
+        {/* Error state: dismiss / delete */}
+        {isError && (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { setActiveJob(null); setView('upload'); }}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md text-sm font-medium transition-colors"
+            >
+              ← Volver a subir video
+            </button>
+            <button
+              onClick={async () => {
+                setDeleting(true);
+                try { await deleteJob(activeJob.id); } catch { /* best-effort */ }
+                setActiveJob(null);
+                setView('upload');
+              }}
+              disabled={deleting}
+              className="px-4 py-2 bg-red-900/60 hover:bg-red-800 disabled:opacity-50 rounded-md text-sm font-medium text-red-300 transition-colors"
+            >
+              {deleting ? 'Eliminando…' : 'Eliminar job'}
+            </button>
+          </div>
         )}
 
         {/* Download links when done */}
