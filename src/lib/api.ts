@@ -93,6 +93,13 @@ export async function uploadVideo(file: File): Promise<VideoFile> {
   return res.json();
 }
 
+export async function deleteVideo(filename: string): Promise<void> {
+  const res = await authFetch(`/api/videos/${encodeURIComponent(filename)}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Delete failed');
+}
+
 // ─── Jobs ───────────────────────────────────────────────────────────
 export interface ProcessOptions {
   video_path: string;

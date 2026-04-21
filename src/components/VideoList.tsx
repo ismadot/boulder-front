@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { listVideos, createJob, type ProcessOptions } from '../lib/api';
+import { listVideos, createJob, deleteVideo, type ProcessOptions } from '../lib/api';
 import { useAppStore } from '../stores/app';
 import { ClimberProfileForm } from './ClimberProfileForm';
 
@@ -142,6 +142,7 @@ export function VideoList() {
   const climberProfile = useAppStore((s) => s.climberProfile);
 
   const [loading, setLoading] = useState<string | null>(null);   // filename being processed
+  const [deleting, setDeleting] = useState<string | null>(null); // filename being deleted
   const [expanded, setExpanded] = useState<string | null>(null); // filename with open options
   const [perVideoOpts, setPerVideoOpts] = useState<Record<string, Record<OptionKey, boolean>>>({});
 
@@ -187,6 +188,18 @@ export function VideoList() {
       // error visible in JobProgress
     } finally {
       setLoading(null);
+    }
+  };
+
+  const handleDelete = async (filename: string) => {
+    setDeleting(filename);
+    try {
+      await deleteVideo(filename);
+      setVideos(videos.filter((v) => v.filename !== filename));
+    } catch {
+      // silently ignore — file may already be gone
+    } finally {
+      setDeleting(null);
     }
   };
 
